@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /* frame_data.h
  * Definitions for frame_data structures and routines
  *
@@ -31,15 +35,28 @@ extern void frame_data_init(frame_data *fdata, guint32 num,
                 const struct wtap_pkthdr *phdr, gint64 offset,
                 guint32 cum_bytes);
 
-extern void frame_data_set_before_dissect(frame_data *fdata,
-                nstime_t *elapsed_time,
-                nstime_t *first_ts,
-                nstime_t *prev_dis_ts,
-                nstime_t *prev_cap_ts);
+extern
+void
+frame_data_set_before_dissect(
+    frame_data *fdata,
+    nstime_t *elapsed_time,
+    nstime_t *first_ts,
+#if (WIRESHARK_0_99_5 || WIRESHARK_1_0_0 || WIRESHARK_1_2_0)
+    nstime_t *prev_dis_ts,
+    nstime_t *prev_cap_ts
+#else
+    const frame_data *prev_dis,
+    const frame_data *prev_cap
+#endif
+	);
 
-extern void frame_data_set_after_dissect(frame_data *fdata,
-                guint32 *cum_bytes,
-                nstime_t *prev_dis_ts);
+extern
+void
+frame_data_set_after_dissect(
+    frame_data *fdata,
+    guint32 *cum_bytes
+    );
+
 
 #endif  /* __SHARKTOOLS_FRAME_DATA__ */
 

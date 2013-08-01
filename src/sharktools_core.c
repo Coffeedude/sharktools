@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /* Copyright (c) 2007-2011
  *      Massachusetts Institute of Technology
  *
@@ -127,6 +131,9 @@ static guint32 cum_bytes = 0;
 static nstime_t first_ts;
 static nstime_t prev_dis_ts;
 static nstime_t prev_cap_ts;
+
+static frame_data *prev_dis;
+static frame_data *prev_cap;
 
 static const char *cf_open_error_message(int err, gchar *err_info, int file_type)
 {
@@ -573,10 +580,20 @@ static void compute_hashes_from_fieldnames(GHashTable *fieldname_indicies, const
     }
 }
 
+/**
+ * A data source.
+ * Has a tvbuff and a name.
+ */
+struct data_source
+{
+    tvbuff_t *tvb;
+    char *name;
+};
+
 static const guint8 *get_field_data(GSList *src_list, field_info *fi)
 {
   GSList *src_le;
-  data_source *src;
+  struct data_source *src;
   tvbuff_t *src_tvb;
   gint length, tvbuff_length;
 
@@ -988,9 +1005,8 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
   epan_dissect_t edt;
   gboolean passed;
 
-  const struct wtap_pkthdr *whdr = wtap_phdr(cf->wth);
-  union wtap_pseudo_header *pseudo_header = wtap_pseudoheader(cf->wth);
-  const guchar *pd = wtap_buf_ptr(cf->wth);
+  struct wtap_pkthdr *whdr = wtap_phdr(cf->wth);
+  const guint8 *pd = wtap_buf_ptr(cf->wth);
 
   /* Count this packet.
      NB: the frame dissector uses this to determine frame.number
@@ -1004,8 +1020,19 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
 
   frame_data_init(&fdata, cf->count, whdr, offset, cum_bytes);
 
-  frame_data_set_before_dissect(&fdata, &cf->elapsed_time,
-                                &first_ts, &prev_dis_ts, &prev_cap_ts);
+  frame_data_set_before_dissect(
+      &fdata,
+      &cf->elapsed_time,
+      &first_ts,
+#if 0
+      // FIXME
+      prev_dis,
+      prev_cap
+#else
+      NULL,
+      NULL
+#endif
+      );
 
   passed = TRUE;
 
@@ -1019,7 +1046,7 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
   /**
    * Run the dissector on this packet
    */
-  epan_dissect_run(&edt, pseudo_header, pd, &fdata, NULL);
+  epan_dissect_run(&edt, whdr, pd, &fdata, NULL);
 
   tap_push_tapped_queue(&edt);
 
@@ -1032,7 +1059,7 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
   }
 
   if(passed) {
-    frame_data_set_after_dissect(&fdata, &cum_bytes, &prev_dis_ts);
+    frame_data_set_after_dissect(&fdata, &cum_bytes);
 
     /* stdata could be NULL if we are just counting packets */
     if(stdata != NULL)
