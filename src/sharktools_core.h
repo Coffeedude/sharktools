@@ -89,7 +89,7 @@ typedef struct sharktools_callbacks {
 /**
  * This structure holds Sharktools-specific data that is routed through
  * libwireshark's callback system.
- * 
+ *
  * It is worth noting that fields and field_indices are calculated
  * once per execution of sharktools, while field_values and field_types
  * are updated once per packet processed.
@@ -114,7 +114,7 @@ typedef struct _stdata_t
 
   /**
    * Arrays for fieldnames without wildcards in them
-   * 
+   *
    * 'tree_values' holds an ordered list of values found for
    * a particular packet.
    * 'field_types' holds an ordered list of data types (enum, in

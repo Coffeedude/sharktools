@@ -94,7 +94,7 @@ gpointer cb_row_set(sharktools_callbacks *cb, void *row, void *key, gulong type,
     case FT_INT64:
       /* Wireshark doesn't seem to make a difference between INT64 and UINT64 */
     case FT_UINT64:
-      //guint64 tmp = 
+      //guint64 tmp =
       printf("%llu", (long long unsigned int)fvalue_get_integer64(val_native));// tmp);
       break;
     case FT_INT8:
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
   fieldnames = g_new(char*, MAX_NUM_FIELDS);
 
   int option_index = 0;
- 
+
   while(1)
     {
       int val = getopt_long(argc, argv, "f:i:d:", long_options, &option_index);
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
           return 1;
         }
     }
-  
+
   // User must specify a filename and at least one field.
   if(nfields == 0 || filename == NULL)
     {
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
 
   gsize i;
 
-  gulong native_type_array[] = { FT_BOOLEAN, 
+  gulong native_type_array[] = { FT_BOOLEAN,
                                  FT_UINT8,
                                  FT_UINT16,
                                  FT_UINT24,

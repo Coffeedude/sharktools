@@ -1,5 +1,5 @@
 /* cfile.c
- * capture_file GUI-independent manipulation 
+ * capture_file GUI-independent manipulation
  * Vassilii Khachaturov <vassilii@tarunz.org>
  *
  * $Id$

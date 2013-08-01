@@ -68,7 +68,7 @@
 /* APB: wireshark >= 1.0 wants get_credential_info(), which is located in privileges.h
  */
 #if WIRESHARK_1_0_0
-#include <epan/privileges.h> 
+#include <epan/privileges.h>
 #elif (WIRESHARK_1_2_0 || WIRESHARK_1_4_0 || WIRESHARK_1_6_0 || WIRESHARK_1_8_0)
 #include <wsutil/privileges.h>
 #endif
@@ -138,16 +138,16 @@ static const char *cf_open_error_message(int err, gchar *err_info, int file_type
       /* Wiretap error. */
       switch (err)
 	{
-	  
+
 	case WTAP_ERR_NOT_REGULAR_FILE:
 	  errmsg = "The file \"%s\" is a \"special file\" or socket or other non-regular file.";
 	  break;
-	  
+
 	case WTAP_ERR_FILE_UNKNOWN_FORMAT:
 	  /* Seen only when opening a capture file for reading. */
 	  errmsg = "The file \"%s\" isn't a capture file in a format Sharktools understands.";
 	  break;
-	  
+
 	case WTAP_ERR_UNSUPPORTED:
 	  /* Seen only when opening a capture file for reading. */
 	  g_snprintf(errmsg_errno, sizeof(errmsg_errno),
@@ -156,7 +156,7 @@ static const char *cf_open_error_message(int err, gchar *err_info, int file_type
 	  g_free(err_info);
 	  errmsg = errmsg_errno;
 	  break;
-	  
+
 	case WTAP_ERR_CANT_WRITE_TO_PIPE:
 	  /* Seen only when opening a capture file for writing. */
 	  g_snprintf(errmsg_errno, sizeof(errmsg_errno),
@@ -164,12 +164,12 @@ static const char *cf_open_error_message(int err, gchar *err_info, int file_type
 		     "written to a pipe.", wtap_file_type_string(file_type));
 	  errmsg = errmsg_errno;
 	  break;
-	  
+
 	case WTAP_ERR_UNSUPPORTED_FILE_TYPE:
 	  /* Seen only when opening a capture file for writing. */
 	  errmsg = "Sharktools doesn't support writing capture files in that format.";
 	  break;
-	  
+
 	case WTAP_ERR_UNSUPPORTED_ENCAP:
 	  g_snprintf(errmsg_errno, sizeof(errmsg_errno),
 		     "The file \"%%s\" is a capture for a network type that Sharktools doesn't support.\n"
@@ -177,11 +177,11 @@ static const char *cf_open_error_message(int err, gchar *err_info, int file_type
 	  g_free(err_info);
 	  errmsg = errmsg_errno;
 	  break;
-	  
+
 	case WTAP_ERR_ENCAP_PER_PACKET_UNSUPPORTED:
 	  errmsg = "The file \"%s\" is a capture for a network type that Sharktools doesn't support.";
 	  break;
-	  
+
 #if WIRESHARK_1_8_0 != 1
 	case WTAP_ERR_BAD_RECORD:
 	  /* Seen only when opening a capture file for reading. */
@@ -192,20 +192,20 @@ static const char *cf_open_error_message(int err, gchar *err_info, int file_type
 	  errmsg = errmsg_errno;
 	  break;
 #endif
-	  
+
 	case WTAP_ERR_CANT_OPEN:
 	  errmsg = "The file \"%s\" could not be opened for some unknown reason.";
 	  break;
-	  
+
 	case WTAP_ERR_SHORT_READ:
 	  errmsg = "The file \"%s\" appears to have been cut short"
 	    " in the middle of a packet or other data.";
 	  break;
-	  
+
 	case WTAP_ERR_SHORT_WRITE:
 	  errmsg = "A full header couldn't be written to the file \"%s\".";
 	  break;
-	  
+
 	default:
 	  g_snprintf(errmsg_errno, sizeof(errmsg_errno),
 		     "The file \"%%s\" could not be opened: %s.",
@@ -431,7 +431,7 @@ stdata_init(st_data_t* stdata)
 }
 
 /**
- * Here we cleanup stdata by deallocating it's members in reverse order of 
+ * Here we cleanup stdata by deallocating it's members in reverse order of
  * allocation.
  */
 #if 0
@@ -441,7 +441,7 @@ stdata_cleanup_old(st_data_t* stdata)
   gsize i;
 
   g_assert(stdata);
-  
+
   ////g_array_free(stdata->tree_types, FALSE);
 
   g_free(stdata->field_types);
@@ -451,7 +451,7 @@ stdata_cleanup_old(st_data_t* stdata)
       g_ptr_array_free( g_ptr_array_index(stdata->tree_values, i), TRUE);
      }
   g_ptr_array_free( stdata->tree_values, TRUE);
- 
+
 
   if(NULL != stdata->field_indicies)
     {
@@ -474,7 +474,7 @@ stdata_cleanup_old(st_data_t* stdata)
 #endif
 
 /**
- * Here we cleanup stdata by deallocating it's members in reverse order of 
+ * Here we cleanup stdata by deallocating it's members in reverse order of
  * allocation.
  */
 static void
@@ -483,7 +483,7 @@ stdata_cleanup(st_data_t* stdata)
   gsize i;
 
   g_assert(stdata);
-  
+
   ////if(stdata->tree_types)
     ////g_array_free(stdata->tree_types, FALSE);
 
@@ -528,15 +528,15 @@ static void stdata_add_fields(st_data_t* stdata, const gchar** fields, gsize nfi
 
   g_assert(stdata);
   g_assert(fields);
-  
+
   for(i = 0; i < nfields; i++)
     {
       dprintf("adding outputfield: %s\n", fields[i]);
       //stdata_add(&stdata, fields[i]);
       gchar* field_copy;
-  
+
       field_copy = g_strdup(fields[i]);
-  
+
       // Add to fields
       g_ptr_array_add(stdata->fieldnames, field_copy);
 
@@ -561,7 +561,7 @@ static void compute_hashes_from_fieldnames(GHashTable *fieldname_indicies, const
 
   g_assert(fieldname_indicies);
   g_assert(fieldnames);
-  
+
   for(i = 0; i < fieldnames->len; i++)
     {
       //dprintf("adding outputfield: %s\n", fieldnames[i]);
@@ -579,7 +579,7 @@ static const guint8 *get_field_data(GSList *src_list, field_info *fi)
   data_source *src;
   tvbuff_t *src_tvb;
   gint length, tvbuff_length;
-  
+
   for (src_le = src_list; src_le != NULL; src_le = src_le->next)
     {
       src = src_le->data;
@@ -619,7 +619,7 @@ GTree *G_native_types;
 
 /**
  * Looks up type in the global G_native_types tree
- * 
+ *
  * @return True or False indication of search
  */
 static inline gboolean is_native_type(gulong type)
@@ -652,7 +652,7 @@ static inline gboolean is_native_type(gulong type)
  * we are looking for (nodes store the key in PITEM_FINFO(node)->hfinfo->abbrev).
  * If we found an appropriate field, copy the native value or string representation
  * of the value as appropriate.
- * 
+ *
  * Finally, recurse on child nodes.
  */
 static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
@@ -675,7 +675,7 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
                                            key,
                                            &orig_key,
                                            &field_index);
-  
+
   if(!key_found)
     {
       // Look to see if the current field name matches any wildcards we have
@@ -692,7 +692,7 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
             }
         }
     }
-  
+
   gchar* val_str;
   gulong actual_index = (gulong)(field_index);
 
@@ -718,7 +718,7 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
             {
               values = g_ptr_array_new();
               g_hash_table_insert(stdata->wtree_values, key, values);
-              
+
               // NB: Assume all values have the same type; we set this on the first entry
               // dprintf("ty2pe: %d\n", type);
 
@@ -733,7 +733,7 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
 
           // NB: non-wildcard field type info is handled later in this fn...
         }
-      
+
       if(type == FT_STRING)
         {
           dprintf("found a string!\n");
@@ -751,10 +751,10 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
 
           //check repr
           if(  fi->rep ){
-            val_str = g_strdup( fi->rep->representation ); 
+            val_str = g_strdup( fi->rep->representation );
 
             g_ptr_array_add(values, val_str);
-            
+
             tmp_type = FT_STRING;
           }
 
@@ -763,7 +763,7 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
               //XXX CLEANUP
               //gulong *tmp2 = g_new0(gulong, 1);
               //*tmp2 = tmp_type;
-              // NB: overwrite the previous value 
+              // NB: overwrite the previous value
               g_hash_table_insert(stdata->wtree_types, key, (gpointer)tmp_type);
             }
           else
@@ -776,7 +776,7 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
         {
           fvalue_t* tmp = g_new(fvalue_t,1);
           memcpy(tmp, &(fi->value), sizeof(fvalue_t));
-          
+
           g_ptr_array_add(values, tmp);
 
           if(is_wildcard_field)
@@ -795,7 +795,7 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
         {
           // As a last ditch options, convert the value to a string,
           // and don't bother storing the native type
-          val_str = (gchar *)get_node_field_value_as_string(fi, args->edt); 
+          val_str = (gchar *)get_node_field_value_as_string(fi, args->edt);
           if(strlen(val_str) > 0)
             {
               if(is_wildcard_field)
@@ -857,13 +857,13 @@ static const gchar* get_node_field_value_as_string(field_info* fi, epan_dissect_
     {
       return get_field_hex_value2(edt->pi.data_src, fi);
     }
-#endif  
+#endif
   /* Normal protocols and fields */
   else
     {
       gchar		*dfilter_string;
       gint		chop_len;
-      
+
       switch (fi->hfinfo->type)
 	{
 	case FT_NONE:
@@ -889,7 +889,7 @@ static const gchar* get_node_field_value_as_string(field_info* fi, epan_dissect_
 	  if (dfilter_string != NULL)
 	    {
 	      chop_len = strlen(fi->hfinfo->abbrev) + 4; /* for " == " */
-	      
+
 	      /* XXX - Remove double-quotes. Again, once we
 	       * can call fvalue_to_string_repr(), we can
 	       * ask it not to produce the version for
@@ -900,7 +900,7 @@ static const gchar* get_node_field_value_as_string(field_info* fi, epan_dissect_
 		  dfilter_string[strlen(dfilter_string)-1] = '\0';
 		  chop_len++;
 		}
-	      
+
 	      return &(dfilter_string[chop_len]);
 	    }
 	  else
@@ -915,15 +915,15 @@ static const gchar* get_node_field_value_as_string(field_info* fi, epan_dissect_
 static const gchar* get_field_hex_value2(GSList* src_list, field_info *fi)
 {
   const guint8 *pd;
-  
+
   if (fi->length > tvb_length_remaining(fi->ds_tvb, fi->start))
     {
       return "field length invalid!";
     }
-  
+
   /* Find the data for this field. */
   pd = get_field_data(src_list, fi);
-  
+
   if (pd)
     {
       int i;
@@ -931,7 +931,7 @@ static const gchar* get_field_hex_value2(GSList* src_list, field_info *fi)
       gchar* p;
       int len;
       const int chars_per_byte = 2;
-      
+
       len = chars_per_byte * fi->length;
       buffer = ep_alloc_array(gchar, len + 1);
       buffer[len] = '\0'; /* Ensure NULL termination in bad cases */
@@ -964,11 +964,11 @@ void proto_tree_get_fields(st_data_t* stdata, epan_dissect_t *edt)
 {
   g_assert(stdata);
   g_assert(edt);
-  
+
   stdata_edt_tuple_t arg;
   arg.stdata = stdata;
-  arg.edt = edt;  
-  
+  arg.edt = edt;
+
   proto_tree_children_foreach(edt->tree,
                               proto_tree_get_node_field_values,
 			      &arg);
@@ -979,7 +979,7 @@ void proto_tree_get_fields(st_data_t* stdata, epan_dissect_t *edt)
  * this function will read a packet and decide if it matches the display
  * filter.  If it does, it calls proto_tree_get_fields() to read specific fields
  * into stdata.
- * 
+ *
  * @return passed a boolean describing whether the packet matched the filter.
  */
 gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
@@ -1022,7 +1022,7 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
   epan_dissect_run(&edt, pseudo_header, pd, &fdata, NULL);
 
   tap_push_tapped_queue(&edt);
-  
+
   // AB: Run the read filter
   if(cf->rfcode) {
     passed = dfilter_apply_edt(cf->rfcode, &edt);
@@ -1033,7 +1033,7 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
 
   if(passed) {
     frame_data_set_after_dissect(&fdata, &cum_bytes, &prev_dis_ts);
-    
+
     /* stdata could be NULL if we are just counting packets */
     if(stdata != NULL)
       proto_tree_get_fields(stdata, &edt);
@@ -1049,7 +1049,7 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
  * XXX: This was added to combat a problem where a dynamic linking error would occur
  * because some wireshark dissectors (i.e. libraries) did not dynamically link to
  * libwireshark and libglib-2.0.so, but required functions in them to be loaded.
- * 
+ *
  * This is hacky, and this function might not even be necessary in all configurations.
  */
 int sharktools_preload_libs(void)
@@ -1107,7 +1107,7 @@ GCompareFunc sharktools_gulong_cmp(gconstpointer a, gconstpointer b)
 
 /**
  * Sharktools Initialization
- * 
+ *
  * This function will subsequently initialize Wireshark and associated mechanisms.
  */
 int sharktools_init(void)
@@ -1133,9 +1133,9 @@ int sharktools_init(void)
 #elif (WIRESHARK_1_6_0 || WIRESHARK_1_8_0)
   init_process_policies();
 #endif
-  
+
   dprintf("%s: initializing...\n", __FUNCTION__);
-  
+
 #if WIRESHARK_0_99_5
   epan_init(register_all_protocols, register_all_protocol_handoffs,
             failure_message, open_failure_message, read_failure_message);
@@ -1146,13 +1146,13 @@ int sharktools_init(void)
   epan_init(register_all_protocols, register_all_protocol_handoffs, NULL, NULL,
             failure_message, open_failure_message, read_failure_message, write_failure_message);
 #endif
-  
-  //register_all_plugin_tap_listeners();  
+
+  //register_all_plugin_tap_listeners();
   //register_all_tap_listeners();
 
   // Set this global variable to NULL
   G_native_types = NULL;
-  
+
   dprintf("%s: initialized.\n", __FUNCTION__);
 
   return 0;
@@ -1250,7 +1250,7 @@ glong sharktools_count(char *filename, char *dfilter)
   while(wtap_read(cfile.wth, &err, &err_info, &data_offset))
     {
       gboolean passed = TRUE;
-      
+
       // Only process packets if there's a display filter specified
       if(dfilter != NULL && *dfilter != '\0')
         {
@@ -1277,7 +1277,7 @@ glong sharktools_count(char *filename, char *dfilter)
  * This function processes a specified capture file with the specified fields of interest
  * and display filter.  This function calls the appropriate language-specific callback
  * function in <cb> to manipulate data structures in the caller's scope.
- * 
+ *
  * @param filename valid pcap file
  * @param nfields a positive integer describing the number of fields
  * @param fields an array of strings
@@ -1336,7 +1336,7 @@ glong sharktools_get_cb(gchar *filename, gulong nfields, const gchar **fields,
   dprintf("stdata.fieldnames->len = %d\n", stdata.fieldnames->len);
 
   dprintf("stdata.field_types = %p\n", stdata.field_types);
-  
+
   dprintf("%s: opened file\n", __FUNCTION__);
 
   cfile.rfcode = rfcode;
@@ -1356,7 +1356,7 @@ glong sharktools_get_cb(gchar *filename, gulong nfields, const gchar **fields,
         }
 
       gboolean passed = FALSE;
-      
+
       passed = process_packet(&cfile, data_offset, &stdata);
 
       if(passed)
@@ -1384,7 +1384,7 @@ glong sharktools_get_cb(gchar *filename, gulong nfields, const gchar **fields,
           stdata.tree_values = g_ptr_array_new();
           for(i = 0; i < nfields; i++)
             {
-              g_ptr_array_add( stdata.tree_values, g_ptr_array_new() ); 
+              g_ptr_array_add( stdata.tree_values, g_ptr_array_new() );
             }
 
         }
@@ -1420,7 +1420,7 @@ sharktools_iter_init(st_data_t *stdata, gchar *filename, const gchar *dfilter)
   dprintf("stdata->fieldnames->len = %d\n", stdata->fieldnames->len);
 
   dprintf("stdata->field_types = %p\n", stdata->field_types);
-  
+
   dprintf("%s: dfilter: %s\n", __FUNCTION__, dfilter);
 
   if(!dfilter_compile(dfilter, &rfcode)) {
@@ -1471,18 +1471,18 @@ sharktools_iter_next(st_data_t *stdata)
   int err; // XXX useful??
   while(wtap_read(cf->wth, &err, &(stdata->err_info), &(stdata->data_offset))) {
     //dprintf("*******************************\n");
-    
+
     // (Re)-set all the stdata->field_{values,types} fields
     // FIXME: does this actually need to be done?
     int i;
     for(i = 0; i < stdata->fieldnames->len; i++) {
       stdata->field_types[i] = FT_NONE;
     }
-    
+
     gboolean passed = FALSE;
-    
+
     passed = process_packet(cf, stdata->data_offset, stdata);
-    
+
     if(passed) {
       /*
         NB: If passed is true, then stdata->field_{types,values_native,values_str}
@@ -1492,7 +1492,7 @@ sharktools_iter_next(st_data_t *stdata)
       */
       return TRUE;
     }
-    
+
   }
 
   /* Something signifying a that the iteration is done */
@@ -1509,7 +1509,7 @@ sharktools_iter_cleanup(st_data_t *stdata)
     wtap_close(cf->wth);
     cf->wth = NULL;
   }
-  
+
   stdata_cleanup(stdata);
 
   dprintf("%s: ...leaving.\n", __FUNCTION__);

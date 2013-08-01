@@ -90,7 +90,7 @@ gpointer cb_row_set(sharktools_callbacks *cb, gpointer row, gpointer key, gulong
   dprintf("mx = %p ; i = %d ; j = %X\n", mx, i, j);
 
   mxArray *obj = NULL;
-  
+
   /*
    * Apriori variable declarations (because we can't declare these inline in a switch statement)
    */
@@ -192,9 +192,9 @@ gpointer cb_row_set(sharktools_callbacks *cb, gpointer row, gpointer key, gulong
     }
 
   mxSetFieldByNumber(mx, i, j, obj);
-  
+
   /* printf("%s (%d)\t\t", value, type); */
-  
+
   dprintf("%s: leaving\n", __FUNCTION__);
 
   return NULL;
@@ -233,7 +233,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
 #if DEBUG==0
   GLogLevelFlags       log_flags;
-  
+
   /* nothing more than the standard GLib handler, but without a warning */
   log_flags =
     G_LOG_LEVEL_ERROR|
@@ -243,28 +243,28 @@ void mexFunction(int nlhs, mxArray *plhs[],
     G_LOG_LEVEL_INFO|
     G_LOG_LEVEL_DEBUG|
     G_LOG_FLAG_FATAL|G_LOG_FLAG_RECURSION;
-  
-  
+
+
   g_log_set_handler(NULL,
 		    log_flags,
 		    log_func_ignore, NULL /* user_data */);
-  
-  
+
+
   /*
     Handle all GLib messages with a fn that throws them away
   */
   g_log_set_handler ("GLib", G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL,
 		     log_func_ignore, NULL);
-  
+
 #if 0
   g_log_set_handler(LOG_DOMAIN_CAPTURE_CHILD,
                     log_flags,
                     log_func_ignore, NULL /* user_data */);
 #endif
 #endif
-  
+
   dprintf("%s: entering...\n", __FUNCTION__);
-  
+
   /* Register all dissectors, and only once (otherwise assertions will fail) */
   if(!initialized)
     {
@@ -274,10 +274,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
        * to Matlab types.
        */
       GTree *native_types = g_tree_new((GCompareFunc)sharktools_gulong_cmp);
-      
+
       gsize i;
 
-      gulong native_type_array[] = { FT_BOOLEAN, 
+      gulong native_type_array[] = { FT_BOOLEAN,
                                      FT_UINT8,
                                      FT_UINT16,
                                      FT_UINT24,
@@ -292,64 +292,64 @@ void mexFunction(int nlhs, mxArray *plhs[],
                                      FT_DOUBLE,
                                      FT_ABSOLUTE_TIME,
                                      FT_RELATIVE_TIME};
-      
+
       gulong native_type_array_size = (sizeof(native_type_array)/sizeof(native_type_array[0]));
-      
+
       /* NB: We only care about the keys, not the values. */
       gulong dummy_value = 1;
-      
+
       for(i = 0; i < native_type_array_size; i++)
         {
           g_tree_insert(native_types, (gpointer)native_type_array[i], (gpointer)dummy_value);
         }
-      
+
       dprintf("native_types height = %d\n", g_tree_height(native_types));
 
       /* Register the native_types with the sharktools engine */
       sharktools_register_native_types(native_types);
-      
+
       initialized = TRUE;
     }
-  
+
   if(nrhs < 3)
     mexErrMsgTxt("Must provide filename, cell array of fieldnames, and display filter");
-  
+
   if(mxIsChar(prhs[0]) != 1)
     mexErrMsgTxt("1st arg (filename) must be a string");
-  
+
   if(mxIsCell(prhs[1]) != 1)
     mexErrMsgTxt("2nd arg (fields) must be a cellarray of strings");
-  
+
   if(mxIsChar(prhs[2]) != 1)
     mexErrMsgTxt("3rd arg (filter) must be a string");
-  
+
   if(nrhs == 4)
     {
       if(mxIsChar(prhs[3]) != 1)
         mexErrMsgTxt("4th arg (decode_as rule) must be a string");
-      
+
       decode_as = mxCalloc(BUFSIZE, sizeof(char));
       if(mxGetString(prhs[3], decode_as, BUFSIZE))
         mexErrMsgTxt("error getting decode_as string");
-      
+
       dprintf("decode_as = %s\n", decode_as);
-      
+
       sharktools_add_decode_as(decode_as);
     }
-  
+
   filename = mxCalloc(BUFSIZE, sizeof(char));
   if(mxGetString(prhs[0], filename, BUFSIZE))
     mexErrMsgTxt("error getting pcap filename string");
-  
+
   dprintf("pcap filename = %s\n", filename);
-  
+
   /* Get the number of fields */
   nfields = mxGetNumberOfElements(prhs[1]);
   dprintf("nfields = %d\n", nfields);
-  
+
   fieldnames = g_new(char*, nfields);
   mx_fieldnames = mxCalloc(nfields, sizeof(char*));
-  
+
   for(i = 0; i < nfields; i++)
     {
       mxArray *tmp;
@@ -367,10 +367,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
        * Get a copy of the fieldnames for Matlab
        */
       mx_fieldnames[i] = mxCalloc(BUFSIZE, sizeof(char));
-      
+
       if(mxGetString(tmp, mx_fieldnames[i], BUFSIZE))
 	mexErrMsgTxt("error getting a field string");
-      
+
       /*
        * In Matlab's copy of the fieldnames, replace each "."
        * character in the field name with a "_" (In Matlab, '.'
@@ -386,13 +386,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
       /* printf("field #%d = %s\n", i, mx_fieldnames[i]); */
     }
-  
+
   dfilter = mxCalloc(BUFSIZE, sizeof(char));
   if(mxGetString(prhs[2], dfilter, BUFSIZE))
     mexErrMsgTxt("error getting filter string");
-  
+
   dprintf("filter = %s\n", dfilter);
-  
+
   /*
    * Matlab doesn't (as far as I can tell) have an efficient mechanism to
    * let a program dynamically expand a data structure.  It has mxRealloc(),
@@ -436,7 +436,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
 
   /*
-   * Construct a cb "object" with state variables and callbacks 
+   * Construct a cb "object" with state variables and callbacks
    */
   sharktools_callbacks cb;
   cb.root = (gpointer)mx;
@@ -447,7 +447,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
   cb.row_add = cb_row_add;
 
   ret = sharktools_get_cb(filename, nfields, (const gchar**)fieldnames, dfilter, &cb);
-  
+
   if(!mexIsLocked())
     {
       /* Lock this function so that static variables are not reset by
@@ -455,7 +455,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
        */
       mexLock();
     }
-  
+
   /* Remove the decode_as string (otherwise, since the setting is global,
    * it will persist across calls to this function)
    */
@@ -480,7 +480,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     {
       mexErrMsgTxt(sharktools_errmsg);
     }
-  
+
   plhs[0] = mx;
 }
 

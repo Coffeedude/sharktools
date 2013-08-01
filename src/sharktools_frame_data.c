@@ -24,7 +24,7 @@
  */
 
 /*
- * APB: this file contains several functions from wireshark-1.4.0/epan/frame_data.c 
+ * APB: this file contains several functions from wireshark-1.4.0/epan/frame_data.c
  * that were backported to accomodate wireshark-0.99.5, 1.0.*, and 1.2.*
  *
  * We only want to include the content of this file if we are < 1.4.0 (or there

@@ -105,7 +105,7 @@ static PyObject *pysharkIter_allowSingleElementLists(PyObject *self, PyObject *a
     else {
       Py_INCREF(Py_False);
       return Py_False;
-    }        
+    }
   }
 }
 
@@ -140,7 +140,7 @@ static PyObject *pysharkIter_showEmptyFields(PyObject *self, PyObject *args)
     else {
       Py_INCREF(Py_False);
       return Py_False;
-    }        
+    }
   }
 }
 
@@ -274,7 +274,7 @@ pyshark_getTypedValue(GPtrArray* tree_values, gchar *format,
     for(i = 0; i < tree_values->len; ++i) {
       PyList_Append(valueobj, pyshark_format_field(g_ptr_array_index(tree_values, i), format));
     }
-    
+
     return valueobj;
   }
 }
@@ -290,7 +290,7 @@ pyshark_iter(PyObject *self, PyObject *args)
   pyshark_Iter *p;
 
   gint ret;
-  
+
   /* NB: Automatic sanity checks for 1st, 3rd, and optional 4th argument */
   if(!PyArg_ParseTuple(args, "sOs|s", &filename, &keylistobj, &dfilter, &decode_as)) {
     return NULL;
@@ -304,7 +304,7 @@ pyshark_iter(PyObject *self, PyObject *args)
 
   for(i = 0; i < PyList_Size(keylistobj); i++) {
     PyObject *fieldnameobj = PyList_GetItem(keylistobj, i);
-    
+
     if (!PyString_Check(fieldnameobj)) {
       PyErr_SetString(PyExc_TypeError, "All items in second argument list must be strings");
       return NULL;
@@ -312,7 +312,7 @@ pyshark_iter(PyObject *self, PyObject *args)
   }
 
   /* NB: See PyObject.ob_type in http://docs.python.org/c-api/typeobj.html
-     for more info    
+     for more info
    */
   pyshark_IterType.ob_type = &PyType_Type; //pyshark_Iter;
 
@@ -343,13 +343,13 @@ pyshark_iter(PyObject *self, PyObject *args)
     Py_DECREF(p);
     return NULL;
   }
-  
+
   p->stdata = stdata_new();
   if(!p->stdata) {
     Py_DECREF(p);
     return NULL;
   }
-  
+
   p->wpykeyhash = g_hash_table_new(g_str_hash, g_str_equal);
 
   p->nwpykeylist = g_ptr_array_new();
@@ -361,19 +361,19 @@ pyshark_iter(PyObject *self, PyObject *args)
   for(i = 0; i < PyList_Size(keylistobj); i++) {
     /* NB: we know these are not NULL because of our sanity checks above */
     PyObject *keyobj = PyList_GetItem(keylistobj, i);
-    
+
     /* Check for wildcard entries, e.g. "*", "ip.*", "eth.*", etc. */
     const gchar *key = PyString_AsString(keyobj);
     gchar *ptr = g_strstr_len(key, strnlen(key, 100), "*");
 
     if(ptr) {
       /* We have a fieldname with a wildcard in it
-       * 
+       *
        * Use pointer arithmetic to figure out the length
        * TODO: better way to do this, maybe?
        */
       gsize prefix_len = (gsize)ptr - (gsize)key;
-      
+
       g_ptr_array_add(p->stdata->wfieldnames, g_strndup(key, prefix_len));
     }
     else {
@@ -381,7 +381,7 @@ pyshark_iter(PyObject *self, PyObject *args)
        * Non-wildcard entry.
        */
       g_ptr_array_add(p->stdata->fieldnames, PyString_AsString(keyobj));
-          
+
           /* On the python-module side of things, keep a list of python objects,
              one for each non-wildcard fieldname to be processed by sharktools.
              NB: the index between entries in p->{stdata->fieldnames,nwpykeylist}
@@ -410,7 +410,7 @@ pyshark_iter(PyObject *self, PyObject *args)
     /* NB: Add to object state; we'll need to remove it later */
     p->decode_as = strndup(decode_as, strlen(decode_as));
   }
-  
+
   /*
    * Create and initialize sharktools' state
    */
@@ -430,7 +430,7 @@ pyshark_iter(PyObject *self, PyObject *args)
 
 /* struct ht_foreach and my_ht_foreach_fn() were written to be used with
    g_hash_table_foreach().
-   
+
    NB: g_hash_table_foreach() is used instead of GHashTableIter to provide
    backwards compatibility with Glib 2.12, which is the only (standard)
    option present on RHEL5.
@@ -464,9 +464,9 @@ my_ht_foreach_fn(gpointer key, gpointer value, gpointer user_data)
     g_hash_table_insert(wpykeyhash, key, keyobj);
     Py_INCREF(keyobj);
   }
-  
+
   GPtrArray* wtree_values = value;
-  
+
   /* NB: gpointer is being cast as a gulong; hash table holds
      values, NOT pointers to values
   */
@@ -484,7 +484,7 @@ my_ht_foreach_fn(gpointer key, gpointer value, gpointer user_data)
   if(PyDict_SetItem(dictobj, keyobj, valueobj) != 0) {
     PyErr_SetString(PySharkError, "Adding key/value pair to dictionary failed\n");
   }
-  
+
   /* NB: PyDict_SetItem does not take over ownership,
      so we explicitly need to disown valueobj.
   */
@@ -502,15 +502,15 @@ pyshark_getDict(pyshark_Iter *p)
    */
   for(i = 0; i < p->nwpykeylist->len; i++) {
     PyObject *keyobj = g_ptr_array_index(p->nwpykeylist, i);
-    
+
     gulong type;
     type = p->stdata->field_types[i];
     ////type = g_array_index(p->stdata->tree_types, gulong, i);
 
     GPtrArray* tree_values = g_ptr_array_index(p->stdata->tree_values, i);
-    
+
     PyObject *valueobj = pyshark_getValueWithType(tree_values, type, p->asel, p->show_empty_fields);
-    
+
     /* NB: valueobj being NULL is a sentinel value that the wireshark-determined type is FT_NONE
       TODO: fix this?  it kinda makes sense...
     */
@@ -523,7 +523,7 @@ pyshark_getDict(pyshark_Iter *p)
       /* XXX memory cleanup */
       return NULL;
     }
-    
+
     /* NB: PyDict_SetItem does not take over ownership,
        so we explicitly need to disown valueobj.
     */
@@ -531,7 +531,7 @@ pyshark_getDict(pyshark_Iter *p)
   }
 
   /* Get all the wildcard entries
-   * 
+   *
    * NB: We use g_hash_table_foreach() instead of GHashTableIter for
    * backwards compatibility with Glib 2.12, which is the only (standard)
    * option present on RHEL5.
@@ -560,7 +560,7 @@ pyshark_getValueWithType(GPtrArray* tree_values, gulong type, gboolean asel, gbo
   /**
    * More info on the Python type converted to is here:
    *   http://docs.python.org/c-api/arg.html
-   * 
+   *
    * NB: If you add a new native type conversion, don't forget to register it in initpyshark()
    */
   switch(type) {
@@ -582,7 +582,7 @@ pyshark_getValueWithType(GPtrArray* tree_values, gulong type, gboolean asel, gbo
   case FT_BOOLEAN:	/* TRUE and FALSE come from <glib.h> */
     valueobj = pyshark_getTypedValue(tree_values, "B", asel);
     break;
-    
+
   case FT_FRAMENUM:  /* a UINT32, but if selected lets you go to frame with that numbe */
     /* Wireshark implements FT_FRAMENUMs as uintegers. See epan/ftype/ftype-integer.c */
   case FT_IPXNET:
@@ -593,30 +593,30 @@ pyshark_getValueWithType(GPtrArray* tree_values, gulong type, gboolean asel, gbo
   case FT_UINT32:
     valueobj = pyshark_getTypedValue(tree_values, "k", asel);
     break;
-    
+
   case FT_INT8:
   case FT_INT16:
   case FT_INT24:	/* same as for UINT24 */
   case FT_INT32:
     valueobj = pyshark_getTypedValue(tree_values, "i", asel);
     break;
-    
+
   case FT_INT64:
     /* Wireshark doesn't seem to make a difference between INT64 and UINT64 */
   case FT_UINT64:
     valueobj = pyshark_getTypedValue(tree_values, "K", asel);
     break;
-    
+
   case FT_FLOAT:
   case FT_DOUBLE:
     valueobj = pyshark_getTypedValue(tree_values, "f", asel);
     break;
-    
+
   case FT_ABSOLUTE_TIME:
   case FT_RELATIVE_TIME:
     valueobj = pyshark_getTypedValue(tree_values, "T", asel);
     break;
-    
+
 #if 0
   // Convert all the rest to strings:
   //case FT_PROTOCOL:
@@ -662,40 +662,40 @@ pyshark_Iter_iternext(PyObject *self)
   pyshark_Iter *p = (pyshark_Iter *)self;
 
   gboolean pkt_exists = sharktools_iter_next(p->stdata);
-  
+
   if(pkt_exists) {
     PyObject *tmp = pyshark_getDict(p);
     gsize i;
-    
+
     /* Reset tree_values */
     g_ptr_array_free(p->stdata->tree_values, TRUE);
     p->stdata->tree_values = g_ptr_array_new();
     for(i = 0; i < p->stdata->fieldnames->len; i++) {
-        g_ptr_array_add(p->stdata->tree_values, g_ptr_array_new()); 
+        g_ptr_array_add(p->stdata->tree_values, g_ptr_array_new());
       }
-    
+
     /* Reset wtree_values
      * Call our helper method to deallocate the pointer arrays that are set
      * as values in the hash table
      */
     g_hash_table_foreach(p->stdata->wtree_values, my_ht_value_ptrarray_free_fn, NULL);
-    
+
     g_hash_table_remove_all(p->stdata->wtree_values);
-    
+
     return tmp;
   }
   else {
     /* We're done with the iterator, and hence, and {pyshark,sharktools}-specific
      * data, so run the cleanup routine.
-     * 
+     *
      * NB: We also call this in pyshark_Iter_dealloc().
      * NB: This is called to aggressively remove the decode_as string, if set.
      */
     pyshark_iter_cleanup(p);
-    
+
     /* Raise a standard StopIteration exception with empty value. */
     PyErr_SetNone(PyExc_StopIteration);
-    
+
     return NULL;
   }
 }
@@ -703,9 +703,9 @@ pyshark_Iter_iternext(PyObject *self)
 /* pyshark_Iter_dealloc() gets registered as PyTypeObject.tp_dealloc */
 void
 pyshark_Iter_dealloc(PyObject *self)
-{  
+{
   /* Assuming self is not NULL, lets try deleting {pyshark,sharktools}-specific
-   * data.  
+   * data.
    * NB: it may have already been deleted; i.e. if we hit the end of the iterator
    */
   pyshark_Iter *p = (pyshark_Iter*)self;
@@ -739,10 +739,10 @@ pyshark_iter_cleanup(pyshark_Iter *p)
   */
   if(p->decode_as) {
     ret = sharktools_remove_decode_as(p->decode_as);
-    
+
     g_free(p->decode_as);
     p->decode_as = NULL;
-    
+
     if(ret == FALSE) {
       /* Generate the pyshark.error exception */
       dprintf("%s\n", sharktools_errmsg);
@@ -762,7 +762,7 @@ pyshark_iter_cleanup(pyshark_Iter *p)
     g_ptr_array_free(p->nwpykeylist, FALSE);
     p->nwpykeylist = NULL;
   }
-  
+
   /* NB: All (pyshark,sharktools}-specific data should
      be deallocated at this point.
   */
@@ -790,7 +790,7 @@ initpyshark(void)
   PyObject *m;
   GTree *native_types;
   gsize i;
-  gulong native_type_array[] = { FT_BOOLEAN, 
+  gulong native_type_array[] = { FT_BOOLEAN,
                                  FT_UINT8,
                                  FT_UINT16,
                                  FT_UINT24,
