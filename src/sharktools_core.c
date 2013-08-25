@@ -1067,7 +1067,7 @@ gboolean process_packet(capture_file *cf, gint64 offset, st_data_t *stdata)
   }
 
   epan_dissect_cleanup(&edt);
-  frame_data_cleanup(&fdata);
+  frame_data_destroy(&fdata);
 
   return passed;
 }

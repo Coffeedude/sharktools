@@ -21,17 +21,17 @@ WIRESHARK_LIBS=@WIRESHARK_LIBS@
 
 INCLUDEFLAGS=-I. $(WIRESHARK_CFLAGS) $(GLIB_2_0_CFLAGS)
 
-LIBSHARKTOOLS_SRCS=sharktools_cfile.c \
-sharktools_core.c \
-sharktools_add_decode_as.c \
-sharktools_frame_data.c \
-sharktools_epan.c
+LIBSHARKTOOLS_SRCS=\
+  sharktools_cfile.c \
+   sharktools_core.c \
+  sharktools_add_decode_as.c \
+  sharktools_frame_data.c \
+  sharktools_epan.c
 
 LIBSHARKTOOLS_OBJECTS=$(LIBSHARKTOOLS_SRCS:.c=.o)
 
 LIBPATH=-L.
-#LIBS=-lsharktools $(WIRESHARK_LIBS) $(GLIB_2_0_LIBS)
-LIBS=$(GLIB_2_0_LIBS) $(WIRESHARK_LIBS) -lsharktools
+LIBS=-lsharktools $(WIRESHARK_LIBS) $(GLIB_2_0_LIBS)
 
 MEX=@MEX@
 MEXEXT=@MEXEXT@
