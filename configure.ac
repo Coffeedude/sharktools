@@ -364,8 +364,9 @@ elif test $WIRESHARK_VERSION_MAJOR == 1; then
       WIRESHARK_LIBS="$WIRESHARK_LIBS -lwsutil"
    fi
 else
-   AC_MSG_WARN(wireshark version is really, really new! Trying 1.8.0 support...)
+   AC_MSG_WARN(wireshark version is really really new! Trying 1.8.0 support...)
    AC_DEFINE(WIRESHARK_1_8_0)
+   WIRESHARK_LIBS="$WIRESHARK_LIBS -lwsutil"
 fi
 
 
