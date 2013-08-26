@@ -11,7 +11,7 @@ all: @PYSHARK@ @MATSHARK@ sharktools_test
 	@echo -n
 
 #CC=gcc
-CFLAGS=-g -Wall -DHAVE_CONFIG_H -fPIC -O2 @DEFS@
+CFLAGS=-g -Wall -DHAVE_CONFIG_H -fPIC -O0 @DEFS@
 
 GLIB_2_0_CFLAGS=@GLIB_2_0_CFLAGS@
 GLIB_2_0_LIBS=@GLIB_2_0_LIBS@
