@@ -1,0 +1,14 @@
+#!/bin/bash
+
+CXXFLAGS="-O0 -g"
+CPPFLAGS="-O0 -g"
+CFLAGS="-O0 -g" 
+export CXXFLAGS CPPFLAGS CFLAGS
+
+
+_WIRESHARK_SRCDIR="$HOME/dev_ws/build/wireshark.git"
+_DEBUG="yes"
+
+./configure --enable-debug=${_DEBUG} --with-wireshark-src=${_WIRESHARK_SRCDIR} --enable-pyshark || exit $?
+make -j8
+
