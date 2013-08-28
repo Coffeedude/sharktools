@@ -22,7 +22,7 @@ smb2_cmds = [ 'Negotiate',
               'SetInfo',
               'OplockBreak' ]
 
-f = pyshark.read('/home/coffeedude/Desktop/sample_smb.pcap', ['smb2.cmd'], 'smb2')
+f = pyshark.read('/home/coffeedude/Desktop/Ubuntu-Boot-1.pcap', ['smb2.cmd'], 'smb2 && smb2.flags.response == 0')
 b = list(f)
 lengths = {}
 for i in range(len(b)):

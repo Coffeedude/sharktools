@@ -3,6 +3,9 @@
 import sys
 import pyshark
 
+class Smb2Frame:
+
+
 smb2_cmds = [ 'Negotiate',
               'SessionSetup',
               'Logoff',
@@ -42,8 +45,10 @@ fpcap = pyshark.read(
 
 frames = list(fpcap)
 com_create_dict = {}
+lifetime = {}
 
 for i in range(len(frames)):
     if frames[i]['smb2.flags.response'] == False:
+        if
         print >> sys.stdout, frames[i]
         #print >> sys.stdout, "{0:>5} request".format(frames[i]['frame.number'])

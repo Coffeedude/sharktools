@@ -3,7 +3,7 @@
 import pyshark
 
 if __name__ == '__main__':
-    f = pyshark.read('/home/coffeedude/Desktop/sample_smb.pcap', ['smb2.read_length'], 'smb2 && smb2.cmd == 8 && smb2.flags.response')
+    f = pyshark.read('/home/coffeedude/Desktop/Ubuntu-Boot-1.pcap', ['smb2.read_length'], 'smb2 && smb2.cmd == 8 && smb2.flags.response == 1')
     b = list(f)
     print "Number of SMB2_READ requests == %s" % (len(b))
     lengths = {}
@@ -22,5 +22,5 @@ if __name__ == '__main__':
 
     key_list = [int(x) for x in lengths.keys()]
     for k in sorted(key_list):
-       print "%s\t => %s" % (k, lengths[str(k)])
+       print "%s, %s" % (k, lengths[str(k)])
 
