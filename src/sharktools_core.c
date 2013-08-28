@@ -757,9 +757,9 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
           dprintf("string is: %s\n", (char*)fvalue_get(&(fi->value)));
           dprintf("string as gnfvas: %s\n", get_node_field_value_as_string(fi, args->edt));
 
-          val_str = (gchar *)get_node_field_value_as_string(fi, args->edt);
+          // val_str = (gchar *)get_node_field_value_as_string(fi, args->edt);
 
-          g_ptr_array_add(values, val_str);
+          // g_ptr_array_add(values, val_str);
         }
 
       if(type == FT_NONE)
