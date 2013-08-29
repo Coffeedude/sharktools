@@ -2,53 +2,37 @@
 
 import sys
 import pyshark
+import smb2
 
-class Smb2Frame:
 
+frame_fields = ['frame.number',
+                'frame.time']
 
-smb2_cmds = [ 'Negotiate',
-              'SessionSetup',
-              'Logoff',
-              'TreeConnect',
-              'TreeDisconnect',
-              'Create',
-              'Close',
-              'Flush',
-              'Read',
-              'Write',
-              'Lock',
-              'IoCtl',
-              'Cancel',
-              'Echo',
-              'QueryDirectory',
-              'ChangeNotify',
-              'QueryInfo',
-              'SetInfo',
-              'OplockBreak' ]
+smb2_fields = ['smb2.flags.response',
+               'smb2.cmd',
+               'smb2.response_in',
+               'smb2.response_to',
+               'smb2.filename',
+               'smb2.fid',
+               'smb2.tag' ]
+
+fields = frame_fields + smb2_fields
 
 if len(sys.argv) < 2:
     print >> sys.stderr, "usage: %s <pcap filename>" % (sys.argv[0])
     sys.exit(1)
 
-print "Opening file: %s" % (sys.argv[1])
-
-fpcap = pyshark.read(
+pcap_file = pyshark.read(
             sys.argv[1],
-            ['frame.number',
-             'smb2.flags.response',
-             'smb2.response_in',
-             'smb2.response_to',
-             'smb2.filename',
-             'smb2.fid',
-             'smb2.tag' ],
-            'smb2 && smb2.cmd == 5')
+            fields,
+            'smb2')
 
-frames = list(fpcap)
-com_create_dict = {}
-lifetime = {}
-
-for i in range(len(frames)):
-    if frames[i]['smb2.flags.response'] == False:
-        if
-        print >> sys.stdout, frames[i]
-        #print >> sys.stdout, "{0:>5} request".format(frames[i]['frame.number'])
+for frame in pcap_file:
+    smb2_op = smb2.Smb2Frame(
+                  frame['frame.number'],
+                  frame['frame.time'],
+                  frame)
+    if smb2_op.isRequest():
+        print >> sys.stdout, "{0:>5} => {1}".format(
+            smb2_op.frame_number,
+            smb2.Command.Name[smb2_op.packet['smb2.cmd']])
