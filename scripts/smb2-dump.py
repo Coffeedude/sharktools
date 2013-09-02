@@ -79,11 +79,4 @@ pcap_file = pyshark.read(
 
 smb2_ops = []
 for frame in pcap_file:
-    smb2_ops.extend(parse_smb2_frame(frame))
-
-
-for i in range(len(smb2_ops)):
-    if not smb2_ops[i].response:
-        print >> sys.stdout, "{0:>7} => {1}".format(
-            smb2_ops[i].frame,
-            smb2.Cmd.Name[smb2_ops[i].command])
+    print frame
