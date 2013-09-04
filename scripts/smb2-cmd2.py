@@ -4,18 +4,6 @@ import sys
 import pyshark
 import smb2
 
-def op_complete(OpList):
-    has_request = False
-    has_response = False
-
-    for i in range(len(OpList)):
-        if OpList[i].is_response():
-            has_response = True
-        else:
-            has_request = True
-
-    return (has_request and has_response)
-
 fields = [
     'frame.number',
     'frame.time',
@@ -35,9 +23,31 @@ fields = [
     'smb2.fid'
     ]
 
+'''
+def get_file_id(OpList):
+    command = OpList[0].command
+
+    if command == smb2.SMB2_CREATE:
+        pass
+    elif command == :
+        pass
+'''
+def op_complete(OpList):
+    has_request = False
+    has_response = False
+
+    for i in range(len(OpList)):
+        if OpList[i].is_response():
+            has_response = True
+        else:
+            has_request = True
+
+    return (has_request and has_response)
+
 if len(sys.argv) < 2:
-    print >> sys.stderr, "usage: %s <pcap filename>" % (sys.argv[0])
-    sys.exit(1)
+    sys.argv.append('/home/coffeedude/Desktop/sample_smb.pcap')
+    #print >> sys.stderr, "usage: %s <pcap filename>" % (sys.argv[0])
+    #sys.exit(1)
 
 pcap_file = pyshark.read(
             sys.argv[1],
@@ -45,27 +55,6 @@ pcap_file = pyshark.read(
             'smb2')
 
 smb2_ops = {}
-
-cmd_factory = [
-    smb2.Negotiate,
-    smb2.SessionSetup,
-    smb2.Logoff,
-    smb2.TreeConnect,
-    smb2.TreeDisconnect,
-    smb2.Create,
-    smb2.Close,
-    smb2.Flush,
-    smb2.Read,
-    smb2.Write,
-    smb2.Lock,
-    smb2.IoCtl,
-    smb2.Cancel,
-    smb2.Echo,
-    smb2.QueryDirectory,
-    smb2.ChangeNotify,
-    smb2.QueryInfo,
-    smb2.SetInfo,
-    smb2.OplockBreak ]
 
 for frame in pcap_file:
     commands = frame.pop('smb2.cmd')
@@ -75,7 +64,7 @@ for frame in pcap_file:
     for i in range(len(commands)):
 
         try:
-            op = cmd_factory[commands[i]](commands[i], frame)
+            op = smb2.factory[commands[i]](commands[i], frame)
         except KeyError, e:
             print smb2.Cmd.Name[commands[i]], e, frame
 
@@ -102,13 +91,7 @@ for i in seq_num:
     cmd_stats[command] += 1
     count_cmd += 1
 
-    if command == smb2.Cmd.SMB2_READ:
-        if list == type(smb2_ops[str(i)][0].read_length):
-            print "Frame {0}, Size = {1}".format(
-                smb2_ops[str(i)][0].frame,
-                str(smb2_ops[str(i)][0].read_length))
-            continue
-
+    if command == smb2.SMB2_READ:
         k = str(smb2_ops[str(i)][0].read_length)
 
         if not k in read_stats:
@@ -117,7 +100,7 @@ for i in seq_num:
         read_stats[k] += 1
         count_read += 1
 
-    elif command == smb2.Cmd.SMB2_WRITE:
+    elif command == smb2.SMB2_WRITE:
         k = str(smb2_ops[str(i)][0].write_length)
 
         if not k in write_stats:
@@ -126,12 +109,19 @@ for i in seq_num:
         write_stats[k] += 1
         count_write += 1
 
+'''
+    f = get_file_id(smb2_ops[i])
+    if not f in fids:
+        fids[f] = []
+    fids[f].extend(smb2_ops[i])
+'''
+
 ## Command Stats
 print "\nTotal Requests = {0}".format(count_cmd)
 print "             Command    Occurrence"
 for k in range(len(cmd_stats)):
     print "{0:>20} => {1}".format(
-        smb2.Cmd.Name[k],
+        smb2.CommandName[k],
         cmd_stats[k])
 
 ## Read stats
@@ -140,7 +130,8 @@ rsizes.sort()
 print "\nTotal Read Requests = {0}".format(count_read)
 print "   Bytes   Occurrences"
 for i in rsizes:
-    print "{0:>8} => {1}".format(i, read_stats[str(i)])
+    # print "{0:>8} => {1}".format(i, read_stats[str(i)])
+    print "{0}, {1}".format(i, read_stats[str(i)])
 
 
 ## Write stats

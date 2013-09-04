@@ -6,46 +6,47 @@ def pop_field(Frame, Key):
     else:
         return Frame.pop(Key)
 
-class Cmd:
-    SMB2_NEGOTIATE = 0x00
-    SMB2_SESSION_SETUP = 0x01
-    SMB2_LOGOFF = 0x02
-    SMB2_TREE_CONNECT = 0x03
-    SMB2_TREE_DISCONNECT = 0x04
-    SMB2_CREATE = 0x05
-    SMB2_CLOSE = 0x06
-    SMB2_FLUSH = 0x07
-    SMB2_READ = 0x08
-    SMB2_WRITE = 0x09
-    SMB2_LOCK = 0x0A
-    SMB2_IOCTL = 0x0B
-    SMB2_CANCEL = 0x0C
-    SMB2_ECHO = 0x0D
-    SMB2_QUERY_DIRECTORY = 0x0E
-    SMB2_CHANGE_NOTIFY = 0x0F
-    SMB2_QUERY_INFO = 0x10
-    SMB2_SET_INFO = 0x11
-    SMB2_OPLOCK_BREAK = 0x12
+SMB2_NEGOTIATE = 0x00
+SMB2_SESSION_SETUP = 0x01
+SMB2_LOGOFF = 0x02
+SMB2_TREE_CONNECT = 0x03
+SMB2_TREE_DISCONNECT = 0x04
+SMB2_CREATE = 0x05
+SMB2_CLOSE = 0x06
+SMB2_FLUSH = 0x07
+SMB2_READ = 0x08
+SMB2_WRITE = 0x09
+SMB2_LOCK = 0x0A
+SMB2_IOCTL = 0x0B
+SMB2_CANCEL = 0x0C
+SMB2_ECHO = 0x0D
+SMB2_QUERY_DIRECTORY = 0x0E
+SMB2_CHANGE_NOTIFY = 0x0F
+SMB2_QUERY_INFO = 0x10
+SMB2_SET_INFO = 0x11
+SMB2_OPLOCK_BREAK = 0x12
+SMB2_SENTINEL = 0x13
 
-    Name = [ 'Negotiate',
-             'SessionSetup',
-             'Logoff',
-             'TreeConnect',
-             'TreeDisconnect',
-             'Create',
-             'Close',
-             'Flush',
-             'Read',
-             'Write',
-             'Lock',
-             'IoCtl',
-             'Cancel',
-             'Echo',
-             'QueryDirectory',
-             'ChangeNotify',
-             'QueryInfo',
-             'SetInfo',
-             'OplockBreak' ]
+CommandName = [
+    'Negotiate',
+    'SessionSetup',
+    'Logoff',
+    'TreeConnect',
+    'TreeDisconnect',
+    'Create',
+    'Close',
+    'Flush',
+    'Read',
+    'Write',
+    'Lock',
+    'IoCtl',
+    'Cancel',
+    'Echo',
+    'QueryDirectory',
+    'ChangeNotify',
+    'QueryInfo',
+    'SetInfo',
+    'OplockBreak' ]
 
 class Frame:
     def __init__(self, FrameNumber, Timestamp):
@@ -66,7 +67,10 @@ class Header(Frame):
             self.nt_status = pop_field(FrameDict, 'smb2.nt_status')
 
         if 'smb2.flags.async' in FrameDict:
-            self.async = FrameDict['smb2.flags.async']
+            self.async = pop_field(FrameDict, 'smb2.flags.async')
+
+    def __repr__(self):
+        return CommandName[self.command] + '[' + repr(self.sequence) + '] {response: ' + repr(self.response) + ', async: ' + repr(self.async) + '}'
 
     def is_response(self):
         return self.response
@@ -319,3 +323,24 @@ class OplockBreak(Header):
             pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
+
+factory = [
+    Negotiate,
+    SessionSetup,
+    Logoff,
+    TreeConnect,
+    TreeDisconnect,
+    Create,
+    Close,
+    Flush,
+    Read,
+    Write,
+    Lock,
+    IoCtl,
+    Cancel,
+    Echo,
+    QueryDirectory,
+    ChangeNotify,
+    QueryInfo,
+    SetInfo,
+    OplockBreak ]
