@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
 import sys
+import os
 import pyshark
 import smb2
+
+if len(sys.argv) < 2:
+    print >> sys.stderr, "usage: %s <pcap filename>" % (sys.argv[0])
+    sys.exit(1)
 
 fields = [
     'frame.number',
@@ -42,6 +47,17 @@ def get_file_id(OpList):
     else:
         return 0
 
+def get_filename(OpList):
+    for op in OpList:
+        if None == op.request:
+            continue
+
+        if op.request.command == smb2.SMB2_CREATE:
+            return op.request.filename
+
+    return '(NULL)'
+
+
 def calculate_lifetime(OpList):
     if len(OpList) == 0:
         return 0
@@ -55,18 +71,26 @@ def calculate_lifetime(OpList):
     return OpList[-1].request.time - OpList[0].request.time
 
 
-##
-## MAIN
-##
-if len(sys.argv) < 2:
-    sys.argv.append('/home/coffeedude/Desktop/sample_smb.pcap')
-    #print >> sys.stderr, "usage: %s <pcap filename>" % (sys.argv[0])
-    #sys.exit(1)
+#
+# MAIN
+#
+pcap_file = pyshark.read(sys.argv[1], fields, 'smb2')
 
-pcap_file = pyshark.read(
-            sys.argv[1],
-            fields,
-            'smb2')
+# Get the base part of the file name specified on the command line
+# E.g. "/a/b/c/d/my_capture_file.pcap" => "my_capture_file"
+_base_filename = sys.argv[1].rsplit(os.sep, 1)[-1]
+
+_logname_base = './' + _base_filename.rsplit(os.extsep, 1)[0]
+_logname_cmd_distrib = _logname_base + '.cmds.csv'
+_logname_io_stat = _logname_base + '.rwstats.csv'
+_logname_offset = _logname_base + '.offsets.csv'
+_logname_handle = _logname_base + '.handles.csv'
+
+log_cmds = file(_logname_cmd_distrib, 'w')
+log_io = file(_logname_io_stat, 'w')
+log_offset = file(_logname_offset, 'w')
+log_lifetime = file(_logname_handle, 'w')
+
 
 smb2_ops = {}
 
@@ -121,18 +145,16 @@ for i in sorted([int(x) for x in smb2_ops]):
 ##
 ## Print stats
 ##
-print "\nCommand, Occurrences"
+log_cmds.write("Command, Occurrences\n")
 for k in range(len(cmd_stats)):
-    print "{0}, {1}".format(
-        smb2.CommandName[k],
-        cmd_stats[k])
+    log_cmds.write(
+        '{0}, {1}\n'.format(
+            smb2.CommandName[k],
+            cmd_stats[k]))
 
-print "\nFile Handles\n"
 for k in fid_stats:
     reads = {}
-    read_count = 0
     writes = {}
-    write_count = 0
 
     for op_exch in fid_stats[k]:
         if op_exch.response.nt_status != 0x0:
@@ -143,23 +165,33 @@ for k in fid_stats:
                 reads[op_exch.request.read_length] = []
 
             reads[op_exch.request.read_length].append(op_exch.request.offset)
-            read_count += 1
 
         elif op_exch.request.command == smb2.SMB2_WRITE:
-            if not op_exch.request.write_length in reads:
+            if not op_exch.request.write_length in writes:
                 writes[op_exch.request.write_length]= []
 
             writes[op_exch.request.write_length].append(op_exch.request.offset)
-            write_count += 1
 
-    print '{0} ({1}: {2}) {3} sec (R/W: {4}/{5})'.format(
-        fid_stats[k][0].request.filename,
-        k,
-        fid_stats[k][0].request.context,
-        calculate_lifetime(fid_stats[k]),
-        read_count,
-        write_count)
+    if len(reads) or len(writes):
+        log_io.write('\n{0} ({1})\n'.format(k, get_filename(fid_stats[k])))
 
+        if len(reads):
+            log_io.write('Read Size, Count\n')
+        for rsize in sorted([int(x) for x in reads]):
+            log_io.write(
+                '{0}, {1}\n'.format(
+                    rsize,
+                    len(reads[rsize])))
+
+        if len(writes):
+            log_io.write('\nWrite Size, Count\n')
+        for wsize in sorted([int(x) for x in writes]):
+            log_io.write(
+                '{0}, {1}\n'.format(
+                    wsize,
+                    len(writes[wsize])))
+
+'''
     print "\nRead Size, File Offset\n"
     read_string = ''
     for rsize in sorted([int(x) for x in reads]):
@@ -177,3 +209,10 @@ for k in fid_stats:
             write_string += str(woffset) + ', '
         write_string = write_string[:-2]
         print write_string
+'''
+
+log_cmds.close()
+log_io.close()
+log_offset.close()
+log_lifetime.close()
+

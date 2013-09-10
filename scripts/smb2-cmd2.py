@@ -20,30 +20,44 @@ fields = [
     'smb2.read_length',
     'smb2.write_length',
     'smb2.file_offset',
-    'smb2.fid'
+    'smb2.fid',
+    'smb2.tag'
     ]
 
-'''
 def get_file_id(OpList):
-    command = OpList[0].command
+    if None == OpList.request:
+        return 0
 
-    if command == smb2.SMB2_CREATE:
-        pass
-    elif command == :
-        pass
-'''
-def op_complete(OpList):
-    has_request = False
-    has_response = False
+    cmd = OpList.request.command
 
-    for i in range(len(OpList)):
-        if OpList[i].is_response():
-            has_response = True
-        else:
-            has_request = True
+    if cmd == smb2.SMB2_CREATE and OpList.response.nt_status == 0x0:
+        OpList.filename = OpList.request.filename
+        return OpList.response.fid
+    elif cmd == smb2.SMB2_READ:
+        return OpList.request.fid
+    elif cmd == smb2.SMB2_WRITE:
+        return OpList.request.fid
+    elif cmd == smb2.SMB2_CLOSE:
+        return OpList.request.fid
+    else:
+        return 0
 
-    return (has_request and has_response)
+def calculate_lifetime(OpList):
+    if len(OpList) == 0:
+        return 0
 
+    if OpList[0].request.command != smb2.SMB2_CREATE:
+        return -1
+
+    if OpList[-1].request.command != smb2.SMB2_CLOSE:
+        return '(active)'
+
+    return OpList[-1].request.time - OpList[0].request.time
+
+
+##
+## MAIN
+##
 if len(sys.argv) < 2:
     sys.argv.append('/home/coffeedude/Desktop/sample_smb.pcap')
     #print >> sys.stderr, "usage: %s <pcap filename>" % (sys.argv[0])
@@ -66,78 +80,100 @@ for frame in pcap_file:
         try:
             op = smb2.factory[commands[i]](commands[i], frame)
         except KeyError, e:
-            print smb2.Cmd.Name[commands[i]], e, frame
+            print smb2.CommandName[commands[i]], e, frame
 
         seq_key = str(op.sequence)
-        if not seq_key in smb2_ops:
-            smb2_ops[seq_key] = []
-        smb2_ops[seq_key].append(op)
 
-read_stats = {}
-write_stats = {}
+        if not seq_key in smb2_ops:
+            smb2_ops[seq_key] = smb2.Exchange()
+
+        if op.is_request():
+            smb2_ops[seq_key].request = op
+        else:
+            # Async response with STATUS_PENDING
+            if op.is_response() and op.is_async() and op.nt_status == 0x00000103:
+                smb2_ops[seq_key].async = op
+            else:
+                smb2_ops[seq_key].response = op
+
 fid_stats = {}
 cmd_stats = [0 for x in range(19)]
 
-seq_num = [int(x) for x in smb2_ops.keys()]
-seq_num.sort()
-
-count_cmd = 0
-count_read = 0
-count_write = 0
-
-for i in seq_num:
+for i in sorted([int(x) for x in smb2_ops]):
     ## Command distribution
-    command = smb2_ops[str(i)][0].command
-    cmd_stats[command] += 1
-    count_cmd += 1
+    smb2_exg = smb2_ops[str(i)]
+    if smb2_exg.request == None:
+        continue
+    else:
+        command = smb2_exg.request.command
+        cmd_stats[command] += 1
 
-    if command == smb2.SMB2_READ:
-        k = str(smb2_ops[str(i)][0].read_length)
+    f = get_file_id(smb2_ops[str(i)])
 
-        if not k in read_stats:
-            read_stats[k] = 0
+    if f == 0:
+        continue
 
-        read_stats[k] += 1
-        count_read += 1
+    if not f in fid_stats:
+        fid_stats[f] = []
+    fid_stats[f].append(smb2_ops[str(i)])
 
-    elif command == smb2.SMB2_WRITE:
-        k = str(smb2_ops[str(i)][0].write_length)
 
-        if not k in write_stats:
-            write_stats[k] = 0
-
-        write_stats[k] += 1
-        count_write += 1
-
-'''
-    f = get_file_id(smb2_ops[i])
-    if not f in fids:
-        fids[f] = []
-    fids[f].extend(smb2_ops[i])
-'''
-
-## Command Stats
-print "\nTotal Requests = {0}".format(count_cmd)
-print "             Command    Occurrence"
+##
+## Print stats
+##
+print "\nCommand, Occurrences"
 for k in range(len(cmd_stats)):
-    print "{0:>20} => {1}".format(
+    print "{0}, {1}".format(
         smb2.CommandName[k],
         cmd_stats[k])
 
-## Read stats
-rsizes = [int(x) for x in read_stats.keys()]
-rsizes.sort()
-print "\nTotal Read Requests = {0}".format(count_read)
-print "   Bytes   Occurrences"
-for i in rsizes:
-    # print "{0:>8} => {1}".format(i, read_stats[str(i)])
-    print "{0}, {1}".format(i, read_stats[str(i)])
+print "\nFile Handles\n"
+for k in fid_stats:
+    reads = {}
+    read_count = 0
+    writes = {}
+    write_count = 0
 
+    for op_exch in fid_stats[k]:
+        if op_exch.response.nt_status != 0x0:
+            continue
 
-## Write stats
-wsizes = [int(x) for x in write_stats.keys()]
-wsizes.sort()
-print "\nTotal Write Requests = {0}".format(count_write)
-print "   Bytes   Occurrences"
-for i in wsizes:
-    print "{0:>8} => {1}".format(i, write_stats[str(i)])
+        if op_exch.request.command == smb2.SMB2_READ:
+            if not op_exch.request.read_length in reads:
+                reads[op_exch.request.read_length] = []
+
+            reads[op_exch.request.read_length].append(op_exch.request.offset)
+            read_count += 1
+
+        elif op_exch.request.command == smb2.SMB2_WRITE:
+            if not op_exch.request.write_length in reads:
+                writes[op_exch.request.write_length]= []
+
+            writes[op_exch.request.write_length].append(op_exch.request.offset)
+            write_count += 1
+
+    print '{0} ({1}: {2}) {3} sec (R/W: {4}/{5})'.format(
+        fid_stats[k][0].request.filename,
+        k,
+        fid_stats[k][0].request.context,
+        calculate_lifetime(fid_stats[k]),
+        read_count,
+        write_count)
+
+    print "\nRead Size, File Offset\n"
+    read_string = ''
+    for rsize in sorted([int(x) for x in reads]):
+        read_string = str(rsize) + ', '
+        for roffset in reads[rsize]:
+            read_string += str(roffset) + ', '
+        read_string = read_string[:-2]
+        print read_string
+
+    print "\nWrite Size, File Offset\n"
+    write_string = ''
+    for wsize in sorted([int(x) for x in writes]):
+        write_string = str(wsize) + ', '
+        for woffset in writes[wsize]:
+            write_string += str(woffset) + ', '
+        write_string = write_string[:-2]
+        print write_string

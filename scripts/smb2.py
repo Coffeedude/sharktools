@@ -1,11 +1,5 @@
 #!/usr/bin/env/python
 
-def pop_field(Frame, Key):
-    if list == type(Frame[Key]):
-        return Frame[Key].pop(0)
-    else:
-        return Frame.pop(Key)
-
 SMB2_NEGOTIATE = 0x00
 SMB2_SESSION_SETUP = 0x01
 SMB2_LOGOFF = 0x02
@@ -49,11 +43,24 @@ CommandName = [
     'OplockBreak' ]
 
 class Frame:
+    """
+    An ethernet frame represented from a network capture file.
+    """
     def __init__(self, FrameNumber, Timestamp):
         self.frame = FrameNumber
         self.time = Timestamp
 
+    def pop_field(self, Frame, Key):
+        if list == type(Frame[Key]):
+            return Frame[Key].pop(0)
+        else:
+            return Frame.pop(Key)
+
 class Header(Frame):
+    """
+    An SMB2 Header maintaining basic information such as command code,
+    sequence number, and flags.
+    """
     def __init__(self, Command, Sequence, FrameNumber, Timestamp, IsResponse, FrameDict):
         Frame.__init__(self, FrameNumber, Timestamp)
         self.command = Command
@@ -64,10 +71,10 @@ class Header(Frame):
         self.async = False
 
         if self.response:
-            self.nt_status = pop_field(FrameDict, 'smb2.nt_status')
+            self.nt_status = self.pop_field(FrameDict, 'smb2.nt_status')
 
         if 'smb2.flags.async' in FrameDict:
-            self.async = pop_field(FrameDict, 'smb2.flags.async')
+            self.async = self.pop_field(FrameDict, 'smb2.flags.async')
 
     def __repr__(self):
         return CommandName[self.command] + '[' + repr(self.sequence) + '] {response: ' + repr(self.response) + ', async: ' + repr(self.async) + '}'
@@ -78,15 +85,19 @@ class Header(Frame):
     def is_request(self):
         return not self.response
 
+    def is_async(self):
+        return not self.async
+
+
 class Negotiate(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
 class SessionSetup(Header):
@@ -94,10 +105,10 @@ class SessionSetup(Header):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
 class Logoff(Header):
@@ -105,10 +116,10 @@ class Logoff(Header):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
 class TreeConnect(Header):
@@ -116,10 +127,10 @@ class TreeConnect(Header):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
 class TreeDisconnect(Header):
@@ -127,10 +138,10 @@ class TreeDisconnect(Header):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
 class Create(Header):
@@ -138,111 +149,115 @@ class Create(Header):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.filename = pop_field(Frame, 'smb2.filename')
+            self.filename = self.pop_field(Frame, 'smb2.filename')
+            self.context = self.pop_field(Frame, 'smb2.tag')
         elif self.is_response() and self.nt_status == 0:
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class Close(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class Flush(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
+
+        if self.is_request():
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class Read(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
-            self.offset = pop_field(Frame, 'smb2.file_offset')
-            self.read_length = pop_field(Frame, 'smb2.read_length')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
+            self.offset = self.pop_field(Frame, 'smb2.file_offset')
+            self.read_length = self.pop_field(Frame, 'smb2.read_length')
 
 class Write(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
-            self.offset = pop_field(Frame, 'smb2.file_offset')
-            self.write_length = pop_field(Frame, 'smb2.write_length')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
+            self.offset = self.pop_field(Frame, 'smb2.file_offset')
+            self.write_length = self.pop_field(Frame, 'smb2.write_length')
 
 class Lock(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class IoCtl(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class Cancel(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
 class Echo(Header):
@@ -250,10 +265,10 @@ class Echo(Header):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
 class QueryDirectory(Header):
@@ -261,68 +276,67 @@ class QueryDirectory(Header):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class ChangeNotify(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class QueryInfo(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class SetInfo(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
 
         if self.is_request():
-            self.fid = pop_field(Frame, 'smb2.fid')
+            self.fid = self.pop_field(Frame, 'smb2.fid')
 
 class OplockBreak(Header):
     def __init__(self, Command, Frame):
         Header.__init__(
             self,
             Command,
-            pop_field(Frame, 'smb2.seq_num'),
+            self.pop_field(Frame, 'smb2.seq_num'),
             Frame['frame.number'],
             Frame['frame.time'],
-            pop_field(Frame, 'smb2.flags.response'),
+            self.pop_field(Frame, 'smb2.flags.response'),
             Frame)
-
 
 factory = [
     Negotiate,
@@ -344,3 +358,9 @@ factory = [
     QueryInfo,
     SetInfo,
     OplockBreak ]
+
+class Exchange:
+    def __init__(self):
+        self.request = None
+        self.async = None
+        self.response = None
